@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giappone Autentico - 10 Giorni | Tokyo → Kamakura → Kyoto → Osaka</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #e63946;
+            --secondary: #f1faee;
+            --accent: #a8dadc;
+            --dark: #1d3557;
+            --light: #f8f9fa;
+            --text: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--dark) 0%, #2a5276 100%);
+            color: white;
+            padding: 3rem 0;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Navigation */
+        nav {
+            background: white;
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: var(--dark);
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+
+        nav a:hover {
+            background: var(--accent);
+            color: white;
+        }
+
+        /* Main Content */
+        main {
+            background: white;
+            margin: 2rem auto;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 2rem;
+        }
+
+        section {
+            margin: 3rem 0;
+            padding: 2rem;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+
+        h2 {
+            color: var(--dark);
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 0.5rem;
+        }
+
+        h3 {
+            color: var(--primary);
+            font-size: 1.5rem;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Map */
+        #map {
+            width: 100%;
+            height: 600px;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Itinerary Cards */
+        .itinerary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .day-card {
+            background: white;
+            border-left: 5px solid var(--primary);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .day-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+        }
+
+        .day-card h4 {
+            color: var(--primary);
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .day-card .time {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 1rem;
+        }
+
+        .day-card p {
+            font-size: 0.95rem;
+            color: #555;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Budget Tables */
+        .budget-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            font-size: 0.95rem;
+        }
+
+        .budget-table th {
+            background: var(--dark);
+            color: white;
+            padding: 1rem;
+            text-align: left;
+        }
+
+        .budget-table td {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .budget-table tr:hover {
+            background: #f5f5f5;
+        }
+
+        .budget-table .total {
+            font-weight: 700;
+            background: var(--accent);
+            color: white;
+        }
+
+        /* Price Badge */
+        .price-badge {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin: 0.5rem 0;
+        }
+
+        /* Info Box */
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+
+        .success-box {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+
+        /* Highlights */
+        .highlight {
+            background: #fff9e6;
+            padding: 0.25rem 0.5rem;
+            border-radius: 3px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* Footer */
+        footer {
+            background: var(--dark);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 3rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8rem;
+            }
+
+            nav ul {
+                gap: 1rem;
+            }
+
+            main {
+                padding: 1rem;
+            }
+
+            section {
+                padding: 1.5rem;
+            }
+
+            .itinerary-grid {
+                grid-template-columns: 1fr;
+            }
+
+            #map {
+                height: 400px;
+            }
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin: 1.5rem 0;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            background: white;
+            border: 2px solid var(--dark);
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>🇯🇵 GIAPPONE AUTENTICO</h1>
+            <p>10 Giorni: Tokyo → Takayama → Kyoto → Osaka</p>
+            <p style="font-size: 0.9rem; margin-top: 1rem;">Maggio 2027 | Budget: €1.610-1.875 | Esperienza Vera Giapponese</p>
+        </div>
+    </header>
+
+    <nav>
+        <div class="container">
+            <ul>
+                <li><a href="#overview">Overview</a></li>
+                <li><a href="#mappa">Mappa</a></li>
+                <li><a href="#itinerario">Itinerario</a></li>
+                <li><a href="#budget">Budget</a></li>
+                <li><a href="#alloggi">Alloggi</a></li>
+                <li><a href="#autentico">Esperienze Autentiche</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <!-- OVERVIEW -->
+        <section id="overview">
+            <h2>🗺️ Overview del Viaggio</h2>
+            
+            <div class="info-box">
+                <h3>Cosa Rende Autentico Questo Viaggio?</h3>
+                <ul style="margin-left: 2rem;">
+                    <li><strong>Tsukiji Fish Market:</strong> Colazione dove mangiano i giapponesi (non turisti)</li>
+                    <li><strong>Takayama:</strong> Città periodo Edo perfettamente preservata, "Little Kyoto"</li>
+                    <li><strong>Shirakawa-go:</strong> Villaggio UNESCO con case gassho-zukuri 300+ anni</li>
+                    <li><strong>Ryokan:</strong> Esperienza giapponese vera con kaiseki dinner e onsen privato</li>
+                    <li><strong>Tea Ceremony:</strong> Meditazione zen, non show turistico</li>
+                    <li><strong>Izakaya Locale:</strong> Cena con salaryman e donne giapponesi vere</li>
+                    <li><strong>Nara:</strong> Parco con cervi selvaggi, meno affollato che Kyoto</li>
+                </ul>
+            </div>
+
+            <h3>📊 Numeri del Viaggio</h3>
+            <table class="budget-table">
+                <tr>
+                    <td><strong>Durata</strong></td>
+                    <td>10 giorni / 9 notti</td>
+                </tr>
+                <tr>
+                    <td><strong>Periodo</strong></td>
+                    <td>Maggio 2027 (bassa stagione, clima perfetto)</td>
+                </tr>
+                <tr>
+                    <td><strong>Arrivo</strong></td>
+                    <td>Tokyo (Haneda Airport - HND)</td>
+                </tr>
+                <tr>
+                    <td><strong>Ritorno</strong></td>
+                    <td>Osaka (Kansai Airport - KIX)</td>
+                </tr>
+                <tr>
+                    <td><strong>Budget totale (escluso voli)</strong></td>
+                    <td><span class="highlight">€920-1.264/persona (+Kamakura)</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Budget completo (con voli)</strong></td>
+                    <td><span class="highlight">€2.500-3.034/persona</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Per 2 persone (completo)</strong></td>
+                    <td><span class="highlight">€5.000-6.068</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Città visitate</strong></td>
+                    <td>Tokyo → 🗻 Kamakura (DAY TRIP) → Takayama → Shirakawa-go → Kyoto → Nara → Osaka</td>
+                </tr>
+            </table>
+
+            <div class="success-box">
+                <h3>✅ Cosa Include</h3>
+                <p>✈️ Voli andata/ritorno da Milano/Roma<br>
+                🏨 9 notti in ostelli 4+ stelle + 1 notte in Ryokan autentico Kyoto<br>
+                🗻 Kamakura day trip (Grande Buddha, Hokoku-ji Bamboo) ⭐ NEW!<br>
+                🍽️ Colazioni e cene in ristoranti locali + kaiseki ryokan<br>
+                🚆 Tutti i trasporti interni (treni, autobus, IC Card)<br>
+                🎭 Esperienze autentiche (tea ceremony, mercati, templi, Shirakawa-go)<br>
+                🗺️ Mappa e itinerario completo 11 giorni giorno per giorno</p>
+            </div>
+        </section>
+
+        <!-- MAPPA -->
+        <section id="mappa">
+            <h2>📍 Mappa Interattiva</h2>
+            <p>Clicca sui marker per vedere i dettagli di ogni tappa</p>
+            <div id="map"></div>
+        </section>
+
+        <!-- ITINERARIO -->
+        <section id="itinerario">
+            <h2>📅 Itinerario Giorno per Giorno</h2>
+
+            <div class="itinerary-grid">
+                <!-- Giorno 1 -->
+                <div class="day-card">
+                    <h4>Giorno 1: Arrivo Tokyo</h4>
+                    <div class="time">14:30 - 18:00</div>
+                    <p><strong>📍 Aeroporto Haneda (HND)</strong></p>
+                    <p>Arrivo volo, IC Card Suica (€25), transfer hotel con treno (€20)</p>
+                    <p><strong>🏨 Alloggio:</strong> &AND Hostel Akihabara (4.2⭐)</p>
+                    <span class="price-badge">€30-38/notte</span>
+                    <p style="font-size: 0.85rem; color: #666; margin-top: 1rem;">Tempo di acclimatamento, cena leggera in ostello</p>
+                </div>
+
+                <!-- Giorno 2 -->
+                <div class="day-card">
+                    <h4>Giorno 2: Tsukiji Market</h4>
+                    <div class="time">06:00 - 18:00</div>
+                    <p><strong>🐟 TSUKIJI FISH MARKET</strong></p>
+                    <p>Colazione autentica dove mangiano i giapponesi: sushi fresco (€12-15), wagyu (€15-20), atmosfera locale genuina</p>
+                    <p><strong>🗾 Poi:</strong> Shibuya Crossing, Asakusa Senso-ji (GRATIS)</p>
+                    <span class="price-badge">€25-35 mercato + €15 trasporti</span>
+                </div>
+
+                <!-- Giorno 3 -->
+                <div class="day-card">
+                    <h4>Giorno 3: Kamakura DAY TRIP ⭐</h4>
+                    <div class="time">08:00 - 18:00</div>
+                    <p><strong>🗻 GRANDE BUDDHA DAIBUTSU</strong> (13 metri, bronzo iconico)</p>
+                    <p><strong>🏮 Tsurugaoka Hachimangu:</strong> Tempio Shinto principale storico</p>
+                    <p><strong>🎋 Hokoku-ji Bamboo Grove:</strong> Foresta intima, MENO turistica di Arashiyama ✨</p>
+                    <p><strong>🛍️ Komachi Dori Street:</strong> Artigianato autentico, souvenirs locali</p>
+                    <p><strong>🚆 Trasporto:</strong> JR Shinjuku → Kamakura (50 min, €3), Rientro 16:30</p>
+                    <span class="price-badge">€25-35 total day trip</span>
+                </div>
+
+                <!-- Giorno 4 -->
+                <div class="day-card">
+                    <h4>Giorno 4: Tokyo → Takayama</h4>
+                    <div class="time">09:00 - 18:00</div>
+                    <p><strong>🚆 Limited Express Hida:</strong> Tokyo Shinjuku → Takayama (4.5 ore)</p>
+                    <p>Treno comodo con sedili reclinabili, vedute montane spettacolari durante il percorso</p>
+                    <p><strong>📍 Takayama:</strong> Città periodo Edo "Little Kyoto", case di legno 500+ anni, Sanmachi Suji street illuminata</p>
+                    <p>Check-in alloggio, cena locale ramens o soba</p>
+                    <span class="price-badge">€50-70 treno</span>
+                </div>
+
+                <!-- Giorno 5 -->
+                <div class="day-card">
+                    <h4>Giorno 5: Takayama + Shirakawa-go</h4>
+                    <div class="time">06:00 - 20:00</div>
+                    <p><strong>🏮 Miyagawa Morning Market</strong> (7am-12pm): venditori locali, verdure fresche, artigianato</p>
+                    <p><strong>🏘️ Shirakawa-go UNESCO:</strong> Villaggio tradizionale, case gassho-zukuri 300+ anni, Wada House museo (€6)</p>
+                    <p><strong>🗻 Shiroyama Viewpoint:</strong> vedute panoramiche (minibus €1)</p>
+                    <span class="price-badge">€15-25 mercato + €40-50 Shirakawa</span>
+                </div>
+
+                <!-- Giorno 6 -->
+                <div class="day-card">
+                    <h4>Giorno 6: Takayama → Kyoto Ryokan</h4>
+                    <div class="time">09:00 - 17:00</div>
+                    <p><strong>🚌 Autobus da Takayama a Kyoto via Shirakawa-go</strong> (3 ore totale)</p>
+                    <p><strong>🏯 TOGETSUTEI RYOKAN (Arashiyama)</strong></p>
+                    <p>✨ <span class="highlight">Esperienza Autentica:</span> Kaiseki dinner (cena tradizionale 10-15 piatti), onsen privato 24/7, colazione giapponese, yukata gratis</p>
+                    <span class="price-badge">€100-130/notte (incluso cena+colazione)</span>
+                </div>
+
+                <!-- Giorno 7 -->
+                <div class="day-card">
+                    <h4>Giorno 7: Kyoto Autentico</h4>
+                    <div class="time">07:00 - 18:00</div>
+                    <p><strong>☕ Colazione kaiseki</strong> al ryokan (esperienza meditativa)</p>
+                    <p><strong>🎋 Arashiyama Bamboo Grove:</strong> Foresta magica (GRATIS)</p>
+                    <p><strong>🍵 TEA CEREMONY lezione:</strong> Preparazione matcha, filosofia zen, dolce giapponese</p>
+                    <p><strong>⛩️ Fushimi Inari al tramonto:</strong> 1000 torii rossi SENZA folle (16:30-18:00)</p>
+                    <span class="price-badge">€30-50 tea ceremony</span>
+                </div>
+
+                <!-- Giorno 8 -->
+                <div class="day-card">
+                    <h4>Giorno 8: Nara Day Trip</h4>
+                    <div class="time">08:00 - 18:00</div>
+                    <p><strong>🦌 NARA DEER PARK:</strong> Cervi selvaggi, cracker €1</p>
+                    <p><strong>⛩️ Ryoan-ji Temple:</strong> Giardino zen perfetto (€5)</p>
+                    <p><strong>🕌 Todai-ji Temple:</strong> Tempio più grande Giappone (€9)</p>
+                    <p><strong>✓ Meno affollato di Kyoto, più tranquillo e autentico</strong></p>
+                    <span class="price-badge">€25-30 day trip</span>
+                </div>
+
+                <!-- Giorno 9 -->
+                <div class="day-card">
+                    <h4>Giorno 9: Kyoto → Osaka</h4>
+                    <div class="time">09:00 - 15:00</div>
+                    <p><strong>🚆 JR Treno rapido:</strong> Kyoto → Osaka (75 min, €7-12)</p>
+                    <p><strong>🏨 Alloggio:</strong> &AND Hostel Shinsaibashi East (4.6⭐)</p>
+                    <span class="price-badge">€26-34/notte</span>
+                    <p><strong>🍜 Dotonbori District:</strong> Okonomiyaki (€7), takoyaki (€4), ramen (€6), atmosfera vivace</p>
+                </div>
+
+                <!-- Giorno 10 -->
+                <div class="day-card">
+                    <h4>Giorno 10: Osaka Autentica</h4>
+                    <div class="time">09:00 - 20:00</div>
+                    <p><strong>🏯 Osaka Castle:</strong> Castello iconico + parco (€9 + passeggiata GRATIS)</p>
+                    <p><strong>🍺 IZAKAYA LOCALE:</strong> Cena vera con giapponesi (viai secondarie, non turistiche, €12-20/persona)</p>
+                    <p><strong>🎡 Umeda Ferris Wheel:</strong> Vedute notturne spettacolari (€6)</p>
+                    <span class="price-badge">€40-60 Osaka</span>
+                </div>
+
+                <!-- Giorno 11 -->
+                <div class="day-card">
+                    <h4>Giorno 11: Ritorno a Casa</h4>
+                    <div class="time">08:00 - 20:00</div>
+                    <p><strong>✈️ Aeroporto Kansai (KIX):</strong> Checkout mattina, ultimo shopping</p>
+                    <p><strong>🚆 Treno Haruka Express:</strong> Osaka → Kansai (70 min, €3)</p>
+                    <p>Check-in 3 ore prima volo, arrivederci Giappone! 🇯🇵</p>
+                    <span class="price-badge">€3 trasporto</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- BUDGET DETTAGLIATO -->
+        <section id="budget">
+            <h2>💰 Budget Dettagliato</h2>
+
+            <div class="tabs">
+                <button class="tab-btn active" onclick="showTab('voli')">✈️ Voli</button>
+                <button class="tab-btn" onclick="showTab('alloggi')">🏨 Alloggi</button>
+                <button class="tab-btn" onclick="showTab('cibo')">🍜 Cibo</button>
+                <button class="tab-btn" onclick="showTab('trasporti')">🚆 Trasporti</button>
+                <button class="tab-btn" onclick="showTab('attrazioni')">🎭 Attrazioni</button>
+                <button class="tab-btn" onclick="showTab('totale')">📊 Totale</button>
+            </div>
+
+            <!-- Voli -->
+            <div id="voli" class="tab-content active">
+                <h3>✈️ Voli</h3>
+                <table class="budget-table">
+                    <tr>
+                        <th>Tratta</th>
+                        <th>Compagnia</th>
+                        <th>Prezzo</th>
+                        <th>Note</th>
+                    </tr>
+                    <tr>
+                        <td>Milano/Roma → Tokyo (HND)</td>
+                        <td>Lufthansa, ITA Airways, Air France</td>
+                        <td>€900-1.000</td>
+                        <td>Maggio low-season, prenota 6-8 settimane prima</td>
+                    </tr>
+                    <tr>
+                        <td>Osaka (KIX) → Milano/Roma</td>
+                        <td>China Eastern, Air China</td>
+                        <td>€680-750</td>
+                        <td>Con scalo, maggio economico</td>
+                    </tr>
+                    <tr class="total">
+                        <td colspan="2"><strong>TOTALE VOLI</strong></td>
+                        <td><strong>€1.580-1.750</strong></td>
+                        <td>One-way: risparmi tempo tra città</td>
+                    </tr>
+                </table>
+                <div class="warning-box">
+                    <strong>💡 Pro Tip:</strong> Atterraggio e ritorno da aeroporti diversi = economia + praticità. Tokyo Haneda è moderno, Osaka Kansai ben collegato.
+                </div>
+            </div>
+
+            <!-- Alloggi -->
+            <div id="alloggi" class="tab-content">
+                <h3>🏨 Alloggi</h3>
+                <table class="budget-table">
+                    <tr>
+                        <th>Città</th>
+                        <th>Struttura</th>
+                        <th>Rating</th>
+                        <th>Notti</th>
+                        <th>€/notte</th>
+                        <th>Totale</th>
+                    </tr>
+                    <tr>
+                        <td>Tokyo</td>
+                        <td>&AND Akihabara</td>
+                        <td>4.2⭐</td>
+                        <td>3</td>
+                        <td>€30-38</td>
+                        <td>€90-114 (+1 Kamakura day trip)</td>
+                    </tr>
+                    <tr>
+                        <td>Takayama</td>
+                        <td>Business Hotel locale</td>
+                        <td>-</td>
+                        <td>2</td>
+                        <td>€30-45</td>
+                        <td>€60-90</td>
+                    </tr>
+                    <tr>
+                        <td>Kyoto</td>
+                        <td>TOGETSUTEI RYOKAN ✨</td>
+                        <td>4.2⭐</td>
+                        <td>1</td>
+                        <td>€100-130</td>
+                        <td>€100-130 (kaiseki + onsen)</td>
+                    </tr>
+                    <tr>
+                        <td>Kyoto</td>
+                        <td>Piece Hostel Sanjo</td>
+                        <td>4.7⭐</td>
+                        <td>1</td>
+                        <td>€25-32</td>
+                        <td>€25-32</td>
+                    </tr>
+                    <tr>
+                        <td>Osaka</td>
+                        <td>&AND Shinsaibashi East</td>
+                        <td>4.6⭐</td>
+                        <td>2</td>
+                        <td>€26-34</td>
+                        <td>€52-68</td>
+                    </tr>
+                    <tr class="total">
+                        <td colspan="4"><strong>TOTALE ALLOGGI (8 notti + 1 Ryokan = 9 notti)</strong></td>
+                        <td></td>
+                        <td><strong>€327-434 (+€60 Kamakura expansion)</strong></td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Cibo -->
+            <div id="cibo" class="tab-content">
+                <h3>🍜 Cibo</h3>
+                <p>Budget giornaliero medio: <span class="highlight">€18-25/giorno</span> (10 giorni = €180-250)</p>
+                <table class="budget-table">
+                    <tr>
+                        <th>Pasto</th>
+                        <th>Prezzo €</th>
+                        <th>Esempio</th>
+                    </tr>
+                    <tr>
+                        <td><strong>Colazione</strong></td>
+                        <td>€2-5</td>
+                        <td>7-Eleven sandwich, convenience store, o inclusa alloggio</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Pranzo</strong></td>
+                        <td>€7-10</td>
+                        <td>Ramen (€6-7), Udon (€8), Gyudon (€6), Set menu ristorante locale</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cena</strong></td>
+                        <td>€6-12</td>
+                        <td>Okonomiyaki (€7), Takoyaki (€4), Tempura (€8), Izakaya (€12-18)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Snack/Caffè</strong></td>
+                        <td>€2-4</td>
+                        <td>Matcha latte (€3), street food (€2), caffè (€2-3)</td>
+                    </tr>
+                    <tr class="total">
+                        <td><strong>TOTALE 10 GIORNI</strong></td>
+                        <td></td>
+                        <td><strong>€180-250</strong></td>
+                    </tr>
+                </table>
+                <div class="info-box">
+                    <strong>💡 Hack Risparmio:</strong> Mangia nei convenience store (FamilyMart, 7-Eleven, Lawson) = pasti €3-6 con qualità eccellente. Una cena vera all'izakaya al giorno, resto economico.
+                </div>
+            </div>
+
+            <!-- Trasporti -->
+            <div id="trasporti" class="tab-content">
+                <h3>🚆 Trasporti</h3>
+                <table class="budget-table">
+                    <tr>
+                        <th>Tratta</th>
+                        <th>Tipo</th>
+                        <th>Prezzo €</th>
+                        <th>Tempo</th>
+                    </tr>
+                    <tr>
+                        <td>Haneda → Tokyo centro</td>
+                        <td>Haneda Express train</td>
+                        <td>€20</td>
+                        <td>30 min</td>
+                    </tr>
+                    <tr>
+                        <td>Tokyo interno</td>
+                        <td>IC Card (Suica) + metro/bus</td>
+                        <td>€25-35</td>
+                        <td>Illimitato</td>
+                    </tr>
+                    <tr>
+                        <td>Tokyo → Takayama</td>
+                        <td>Limited Express Hida</td>
+                        <td>€50-70</td>
+                        <td>4.5 ore</td>
+                    </tr>
+                    <tr>
+                        <td>Takayama → Shirakawa-go</td>
+                        <td>Autobus</td>
+                        <td>€18 (A/R)</td>
+                        <td>50 min</td>
+                    </tr>
+                    <tr>
+                        <td>Takayama → Kyoto</td>
+                        <td>Autobus/Treno</td>
+                        <td>€30-40</td>
+                        <td>3 ore</td>
+                    </tr>
+                    <tr>
+                        <td>Kyoto interno</td>
+                        <td>IC Card + metro/bus</td>
+                        <td>€20-25</td>
+                        <td>Illimitato</td>
+                    </tr>
+                    <tr>
+                        <td>Kyoto → Nara</td>
+                        <td>Treno</td>
+                        <td>€3</td>
+                        <td>45 min</td>
+                    </tr>
+                    <tr>
+                        <td>Kyoto → Osaka</td>
+                        <td>JR Treno rapido</td>
+                        <td>€7-12</td>
+                        <td>75 min</td>
+                    </tr>
+                    <tr>
+                        <td>Osaka interno</td>
+                        <td>IC Card + metro/bus</td>
+                        <td>€20-25</td>
+                        <td>Illimitato</td>
+                    </tr>
+                    <tr>
+                        <td>Osaka → Kansai Airport</td>
+                        <td>Haruka Express train</td>
+                        <td>€3</td>
+                        <td>70 min</td>
+                    </tr>
+                    <tr class="total">
+                        <td colspan="2"><strong>TOTALE TRASPORTI (senza JR Pass)</strong></td>
+                        <td><strong>€197-265</strong></td>
+                        <td></td>
+                    </tr>
+                </table>
+                <div class="success-box">
+                    <strong>✅ Non conviene JR Pass:</strong> Per questo itinerario, comprare biglietti singoli costa meno (€197-265 vs €280 JR Pass 7gg). Usa IC Card (Suica) ovunque!
+                </div>
+            </div>
+
+            <!-- Attrazioni -->
+            <div id="attrazioni" class="tab-content">
+                <h3>🎭 Attrazioni & Esperienze</h3>
+                <table class="budget-table">
+                    <tr>
+                        <th>Attrazione</th>
+                        <th>Città</th>
+                        <th>Prezzo €</th>
+                        <th>Tipo</th>
+                    </tr>
+                    <tr>
+                        <td>Senso-ji Temple</td>
+                        <td>Tokyo</td>
+                        <td>GRATIS</td>
+                        <td>Tempio antico</td>
+                    </tr>
+                    <tr>
+                        <td>Shibuya Crossing</td>
+                        <td>Tokyo</td>
+                        <td>GRATIS</td>
+                        <td>Incrocio famoso</td>
+                    </tr>
+                    <tr>
+                        <td>Tsukiji Fish Market</td>
+                        <td>Tokyo</td>
+                        <td>€25-35</td>
+                        <td>Colazione autentica</td>
+                    </tr>
+                    <tr style="background: #fffacd;">
+                        <td><strong>🗻 KAMAKURA DAY TRIP ⭐</strong></td>
+                        <td>Kamakura</td>
+                        <td>€25-35</td>
+                        <td><strong>NEW!</strong> Grande Buddha, Hokoku-ji Bamboo</td>
+                    </tr>
+                    <tr>
+                        <td>Miyagawa Morning Market</td>
+                        <td>Takayama</td>
+                        <td>€10-15</td>
+                        <td>Mercato locale</td>
+                    </tr>
+                    <tr>
+                        <td>Shirakawa-go Wada House</td>
+                        <td>Shirakawa-go</td>
+                        <td>€6</td>
+                        <td>Museo tradizionale</td>
+                    </tr>
+                    <tr>
+                        <td>Shiroyama Viewpoint (minibus)</td>
+                        <td>Shirakawa-go</td>
+                        <td>€1</td>
+                        <td>Vedute panoramiche</td>
+                    </tr>
+                    <tr>
+                        <td>Tea Ceremony Lesson</td>
+                        <td>Kyoto</td>
+                        <td>€30-50</td>
+                        <td>Lezione matcha</td>
+                    </tr>
+                    <tr>
+                        <td>Arashiyama Bamboo Grove</td>
+                        <td>Kyoto</td>
+                        <td>GRATIS</td>
+                        <td>Foresta magica</td>
+                    </tr>
+                    <tr>
+                        <td>Fushimi Inari (1000 torii)</td>
+                        <td>Kyoto</td>
+                        <td>GRATIS</td>
+                        <td>Torii rossi</td>
+                    </tr>
+                    <tr>
+                        <td>Ryoan-ji Zen Garden</td>
+                        <td>Kyoto</td>
+                        <td>€5</td>
+                        <td>Giardino zen</td>
+                    </tr>
+                    <tr>
+                        <td>Nara Deer Park</td>
+                        <td>Nara</td>
+                        <td>GRATIS</td>
+                        <td>Cervi selvaggi</td>
+                    </tr>
+                    <tr>
+                        <td>Todai-ji Temple</td>
+                        <td>Nara</td>
+                        <td>€9</td>
+                        <td>Tempio grande</td>
+                    </tr>
+                    <tr>
+                        <td>Osaka Castle</td>
+                        <td>Osaka</td>
+                        <td>€9</td>
+                        <td>Castello iconico</td>
+                    </tr>
+                    <tr>
+                        <td>Umeda Ferris Wheel</td>
+                        <td>Osaka</td>
+                        <td>€6</td>
+                        <td>Vedute notturne</td>
+                    </tr>
+                    <tr class="total">
+                        <td colspan="2"><strong>TOTALE ATTRAZIONI (+ Kamakura)</strong></td>
+                        <td><strong>€75-115 (+€25 Kamakura)</strong></td>
+                        <td>GRATIS: ~50% attrazioni!</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Totale -->
+            <div id="totale" class="tab-content">
+                <h3>📊 Budget Totale</h3>
+                <table class="budget-table">
+                    <tr>
+                        <th>Categoria</th>
+                        <th>Importo €</th>
+                        <th>% del totale</th>
+                    </tr>
+                    <tr>
+                        <td>✈️ Voli</td>
+                        <td>€1.580-1.750</td>
+                        <td>82%</td>
+                    </tr>
+                    <tr>
+                        <td>🏨 Alloggi (9 notti + Kamakura)</td>
+                        <td>€327-434</td>
+                        <td>14%</td>
+                    </tr>
+                    <tr>
+                        <td>🍜 Cibo (11 giorni)</td>
+                        <td>€198-275</td>
+                        <td>9%</td>
+                    </tr>
+                    <tr>
+                        <td>🚆 Trasporti interni (+ Kamakura)</td>
+                        <td>€220-290</td>
+                        <td>10%</td>
+                    </tr>
+                    <tr>
+                        <td>🎭 Attrazioni (+ Kamakura)</td>
+                        <td>€75-115</td>
+                        <td>3%</td>
+                    </tr>
+                    <tr>
+                        <td>💼 Margine/emergenze</td>
+                        <td>€100-150</td>
+                        <td>5%</td>
+                    </tr>
+                    <tr class="total">
+                        <td><strong>TOTALE 1 PERSONA</strong></td>
+                        <td><strong>€2.500-3.034</strong></td>
+                        <td><strong>100%</strong></td>
+                    </tr>
+                    <tr class="total">
+                        <td><strong>TOTALE 2 PERSONE</strong></td>
+                        <td><strong>€5.000-6.068</strong></td>
+                        <td><strong>-</strong></td>
+                    </tr>
+                </table>
+
+                <div class="success-box">
+                    <h3>✅ Budget Ottimale: €1.610-1.875/persona</h3>
+                    <p>Questo è il budget "autentico" che include:</p>
+                    <ul style="margin-left: 2rem;">
+                        <li>Voli economici con scali intelligenti</li>
+                        <li>Alloggi 4+ stelle (non lussuosi, ma molto confortevoli)</li>
+                        <li>1 notte Ryokan autentico con kaiseki</li>
+                        <li>Cibo nei posti dove mangiano i giapponesi</li>
+                        <li>Esperienze autentiche (tea ceremony, mercati, izakaya)</li>
+                        <li>Margine per imprevisti</li>
+                    </ul>
+                    <p style="margin-top: 1.5rem;"><strong>PER 2 PERSONE: €3.220-3.750</strong></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ALLOGGI DETTAGLIATI -->
+        <section id="alloggi">
+            <h2>🏨 Alloggi Dettagliati</h2>
+
+            <div class="day-card" style="margin-bottom: 2rem;">
+                <h4>Tokyo: &AND HOSTEL AKIHABARA</h4>
+                <p><strong>Rating:</strong> 4.2⭐ (917 recensioni)</p>
+                <p><strong>Prezzo:</strong> €30-38/notte | 2 notti = €60-76</p>
+                <p><strong>Indirizzo:</strong> Chiyoda City, Tokyo, Akihabara</p>
+                <p><strong>Cosa include:</strong> WiFi, lobby cozy, dorm confortevole, staff gentile, bar sociale</p>
+                <p><strong>Perché è autentico:</strong> Zona Akihabara vivace, staff parla inglese, posizione perfetta per Tsukiji market mattina</p>
+            </div>
+
+            <div class="day-card" style="margin-bottom: 2rem;">
+                <h4>Takayama: Business Hotel Locale</h4>
+                <p><strong>Prezzo:</strong> €30-45/notte | 1 notte = €30-45</p>
+                <p><strong>Stile:</strong> Camera giapponese autentica o stile occidentale</p>
+                <p><strong>Cosa include:</strong> Colazione leggera, onsen pubblica, vicinanza Sanmachi Suji</p>
+                <p><strong>Prenotazione:</strong> Su Booking.com, cercare "traditional business hotel Takayama"</p>
+            </div>
+
+            <div class="day-card" style="margin-bottom: 2rem; border-left-color: #ffc107;">
+                <h4>✨ Kyoto: TOGETSUTEI RYOKAN (Arashiyama) - ESPERIENZA AUTENTICA</h4>
+                <p><strong>Rating:</strong> 4.2⭐ (494 recensioni)</p>
+                <p><strong>Prezzo:</strong> €100-130/notte (incluso KAISEKI DINNER + COLAZIONE)</p>
+                <p><strong>Indirizzo:</strong> Arashiyama, Nishikyo Ward, Kyoto</p>
+                <p><strong>📍 Ubicazione:</strong> 10 min a piedi da Togetsutei bridge, bamboo forest a 2 min</p>
+                
+                <h5 style="color: var(--primary); margin-top: 1.5rem;">Cosa Include:</h5>
+                <ul style="margin-left: 2rem;">
+                    <li><strong>Kaiseki Dinner:</strong> 10-15 piatti piccoli, presentati come arte, cambiano con stagione</li>
+                    <li><strong>Onsen Privato 24/7:</strong> Vasca d'acqua calda naturale nella tua stanza</li>
+                    <li><strong>Colazione Tradizionale:</strong> Rice, miso soup, pesce, verdure, tamagoyaki (esperienza culturale)</li>
+                    <li><strong>Yukata Gratis:</strong> Accappatoio tradizionale giapponese</li>
+                    <li><strong>Tatami Room:</strong> Camera con stuoia paglia autentica</li>
+                </ul>
+
+                <p style="margin-top: 1.5rem;"><strong>🔗 Prenotazione:</strong> Booking.com | Clicca "Check availability" per maggio 2027</p>
+            </div>
+
+            <div class="day-card" style="margin-bottom: 2rem;">
+                <h4>Kyoto: PIECE HOSTEL SANJO</h4>
+                <p><strong>Rating:</strong> 4.7⭐ (1798 recensioni) - migliore Kyoto!</p>
+                <p><strong>Prezzo:</strong> €25-32/notte | 1 notte = €25-32</p>
+                <p><strong>Ubicazione:</strong> Centro Kyoto, 10 min a piedi Kyoto Station</p>
+                <p><strong>✅ Bonus Esclusivo:</strong> Colazione CAFFE' E TEH GRATIS ogni mattina (€3-5 valore)</p>
+                <p><strong>Cosa include:</strong> Common kitchen grande, laundry, rooftop, staff parlano inglese, design moderno</p>
+                <p><strong>Perché è autentico:</strong> Mix di turisti e gente locale, atmosfera genuina, zona shopping/ristorazione autentica</p>
+            </div>
+
+            <div class="day-card">
+                <h4>Osaka: &AND HOSTEL SHINSAIBASHI EAST</h4>
+                <p><strong>Rating:</strong> 4.6⭐ (725 recensioni)</p>
+                <p><strong>Prezzo:</strong> €26-34/notte | 2 notti = €52-68</p>
+                <p><strong>Ubicazione:</strong> Shinsaibashi/Dotonbori district - cuore della vita notturna</p>
+                <p><strong>Cosa include:</strong> Common lounge, kitchen, WiFi eccellente, staff SUPER friendly</p>
+                <p><strong>Perché è autentico:</strong> Zona vivace ma genuina, circondato da ristoranti locali non turistici, izakaya nascoste</p>
+            </div>
+        </section>
+
+        <!-- ESPERIENZE AUTENTICHE -->
+        <section id="autentico">
+            <h2>✨ Esperienze Autentiche</h2>
+
+            <div class="info-box">
+                <h3>Cosa Rende Autentica Un'Esperienza?</h3>
+                <p>NON è turistica se: vanno i giapponesi, il cibo è fatto da persone vere, l'atmosfera è genuina, non è costruita per turisti.</p>
+            </div>
+
+            <h3>🐟 1. TSUKIJI FISH MARKET (Tokyo) - Autenticità 10/10</h3>
+            <p><strong>Giorno:</strong> 2 | <strong>Orario:</strong> 06:00-08:00 | <strong>Prezzo:</strong> €25-35</p>
+            <p>Mercato di pesce dove mangiano i VERI GIAPPONESI. Non è zona turistica, è dove vanno i locali.</p>
+            <ul style="margin-left: 2rem;">
+                <li><strong>🍣 Sushi fresco sfondato:</strong> Fatty tuna (otoro) €12-15 (vs €40 ristorante)</li>
+                <li><strong>🥓 Wagyu A5 skewer:</strong> €15-20 (melt-in-mouth)</li>
+                <li><strong>🦀 Re dei granchi:</strong> €10-12</li>
+                <li><strong>☕ Colazione vera:</strong> Ramen €6, miso soup €2</li>
+                <li><strong>🎯 Atmosfera:</strong> Venditori che gridano, frenesia genuina, odore pesce fresco</li>
+            </ul>
+            <p><span class="highlight">PRO TIP:</span> Arrivi 6am, colazione, esci 7:30am. Perfetto per poi visitare Shibuya mattina.</p>
+
+            <h3>🏮 2. TAKAYAMA MORNING MARKET (Giappone rurale)</h3>
+            <p><strong>Giorno:</strong> 4 | <strong>Orario:</strong> 07:00-12:00 | <strong>Prezzo:</strong> €10-15</p>
+            <p>Mercato tradizionale lungo il fiume dove venditori locali vendono verdure fresche, artigianato fatto a mano.</p>
+            <ul style="margin-left: 2rem;">
+                <li>Venditori veri (non turisti)</li>
+                <li>Verdure stagionali fresche</li>
+                <li>Artigianato locale (sarubobo dolls, wooden goods)</li>
+                <li>Hida beef buns locali</li>
+                <li>Atmosfera meditativa del mattino</li>
+            </ul>
+
+            <h3>🏘️ 3. SHIRAKAWA-GO UNESCO VILLAGE (Esperienza temporale)</h3>
+            <p><strong>Giorno:</strong> 4-5 | <strong>Durata:</strong> 1 giorno | <strong>Prezzo:</strong> €40-50</p>
+            <p>Villaggio tradizionale con case Gassho-zukuri 300+ anni. Senti di vivere nel periodo Edo.</p>
+            <ul style="margin-left: 2rem;">
+                <li><strong>🏯 Wada House:</strong> Museo interno casa 300+ anni (€6)</li>
+                <li><strong>🗻 Shiroyama Viewpoint:</strong> Vedute panoramiche minibus (€1)</li>
+                <li><strong>🚶 Walk:</strong> Cammina le strade, fotografie stupende</li>
+                <li><strong>⭐ Perché autentica:</strong> Non ricrea il passato, il passato è ancora lì</li>
+            </ul>
+
+            <h3>🍵 4. TEA CEREMONY LEZIONE (Meditazione zen)</h3>
+            <p><strong>Giorno:</strong> 6 | <strong>Durata:</strong> 60-90 min | <strong>Prezzo:</strong> €30-50</p>
+            <p>Impara a preparare matcha (tè verde polverizzato) secondo protocollo secolare giapponese.</p>
+            <ul style="margin-left: 2rem;">
+                <li><strong>👨‍🏫 Maestro:</strong> Insegna gestualità precisa, filosofia zen</li>
+                <li><strong>🍵 Esperienza:</strong> Mediti mentre prepari, non è just tea</li>
+                <li><strong>🍪 Include:</strong> Matcha vero, dolce giapponese, spiegazione filosofia</li>
+                <li><strong>📍 Dove:</strong> Camellia Tea Ceremony (Kyoto, tourist-friendly, inglese)</li>
+            </ul>
+            <div class="success-box">
+                <strong>Prenotazione:</strong> Camellia Tea Ceremony Kyoto | Online | €30-50
+            </div>
+
+            <h3>🏯 5. FUSHIMI INARI AL TRAMONTO (1000 torii magici)</h3>
+            <p><strong>Giorno:</strong> 6 | <strong>Orario:</strong> 16:30-18:00 | <strong>Prezzo:</strong> GRATIS</p>
+            <p><strong>Segreto:</strong> Tutti visitano mattina → folle monstre. Vai al tramonto!</p>
+            <ul style="margin-left: 2rem;">
+                <li>1000 torii rossi illuminati dal sole</li>
+                <li>Pochi turisti, atmosfera magica</li>
+                <li>Gente locale che prega genuinamente</li>
+                <li>Foto spettacolari senza folle dietro</li>
+            </ul>
+
+            <h3>🍺 6. IZAKAYA LOCALE (Cena vera con salaryman)</h3>
+            <p><strong>Giorno:</strong> 9 | <strong>Orario:</strong> 18:00-20:00 | <strong>Prezzo:</strong> €12-20/persona</p>
+            <p>Pub tradizionale giapponese FUORI dalle zone turistiche. Dove socializz...a gente vera.</p>
+            <ul style="margin-left: 2rem;">
+                <li><strong>Come trovarla:</strong> Chiedi al tuo hostel (nei vicoli secondari, non Dotonbori main)</li>
+                <li><strong>Clientela:</strong> Salaryman, donne giapponesi, gente del posto</li>
+                <li><strong>Menu tipico (€12-18 per 3-4 piatti):</strong></li>
+                <li style="margin-left: 2rem;">Takoyaki (polpette polpo) €4</li>
+                <li style="margin-left: 2rem;">Okonomiyaki (crepes giapponese) €7-8</li>
+                <li style="margin-left: 2rem;">Gyoza (ravioli fritti) €5</li>
+                <li style="margin-left: 2rem;">Yakitori (spiedini pollo) €1-3 cadauno</li>
+                <li style="margin-left: 2rem;">Birra locale €3</li>
+                <li><strong>⭐ Atmosfera:</strong> Genuina, festaiola, non posata</li>
+            </ul>
+            <p><span class="highlight">IMPORTANTE:</span> I giapponesi vanno all'izakaya per SOCIALIZZARE, non per turismo. Scoprirai la vera cultura!</p>
+
+            <h3>🦌 7. NARA DEER PARK (Vita selvatica autentica)</h3>
+            <p><strong>Giorno:</strong> 7 | <strong>Durata:</strong> Full day | <strong>Prezzo:</strong> €25-30</p>
+            <p>Cervi selvaggi vagano liberi nel parco. Meno affollato e più tranquillo di Kyoto.</p>
+            <ul style="margin-left: 2rem;">
+                <li><strong>🦌 Cervi:</strong> Danno loro cracker (€1)</li>
+                <li><strong>🕌 Todai-ji Temple:</strong> Tempio più grande Giappone (€9)</li>
+                <li><strong>🛕 Ryoan-ji Zen Garden:</strong> Giardino zen perfetto (€5)</li>
+                <li><strong>⭐ Autenticità:</strong> Pochi turisti occidentali, prevalenza giapponesi locali</li>
+            </ul>
+
+            <h3>🌃 8. OSAKA NIGHT EXPERIENCE (Ferris wheel al tramonto)</h3>
+            <p><strong>Giorno:</strong> 9 | <strong>Orario:</strong> 18:00-19:30 | <strong>Prezzo:</strong> €6</p>
+            <p>Umeda Ferris Wheel al tramonto = vedute notturne Osaka spettacolari, città illuminata, romantico.</p>
+        </section>
+
+        <!-- CHECKLIST PRATICA -->
+        <section>
+            <h2>✅ Checklist Prenotazioni</h2>
+
+            <div class="day-card">
+                <h3 style="color: var(--dark);">📅 Timeline Prenotazioni</h3>
+                
+                <p><strong style="color: var(--primary); font-size: 1.1rem;">MARZO 2027 (6-8 settimane prima)</strong></p>
+                <ul style="margin-left: 2rem;">
+                    <li>☐ Prenota voli (KAYAK, Google Voli, Skyscanner)</li>
+                    <li>☐ Prenota Limited Express Hida Tokyo→Takayama</li>
+                    <li>☐ Prenota autobus Takayama↔Shirakawa-go</li>
+                    <li>☐ <strong style="color: var(--primary);">PRENOTA RYOKAN KYOTO</strong> (si riempie veloce!)</li>
+                </ul>
+
+                <p><strong style="color: var(--primary); font-size: 1.1rem; margin-top: 1.5rem;">APRILE 2027</strong></p>
+                <ul style="margin-left: 2rem;">
+                    <li>☐ Prenota ostelli Tokyo, Osaka, Kyoto (Booking.com)</li>
+                    <li>☐ Prenota Business Hotel Takayama</li>
+                    <li>☐ Prenota Tea Ceremony Kyoto (Camellia Tea)</li>
+                </ul>
+
+                <p><strong style="color: var(--primary); font-size: 1.1rem; margin-top: 1.5rem;">MAGGIO 2027 (2-3 settimane prima partenza)</strong></p>
+                <ul style="margin-left: 2rem;">
+                    <li>☐ Scarica app: Google Maps, Hyperdia (treni), PayPay, Line</li>
+                    <li>☐ Compra eSIM Airalo Giappone (per dati mobili)</li>
+                    <li>☐ Stampa/salva prenotazioni (hotel, voli, treni)</li>
+                    <li>☐ Comunica itinerario a amici/famiglia</li>
+                    <li>☐ Travel insurance (opzionale, consigliato)</li>
+                    <li>☐ Prepara valigia (light pack, scorte medicinali base)</li>
+                </ul>
+            </div>
+
+            <div class="warning-box">
+                <h3>⚠️ Note Importanti</h3>
+                <ul style="margin-left: 2rem;">
+                    <li><strong>Ryokan:</strong> Se non trovi Togetsutei disponibile, alternativa: Fujiya Ryokan (4.8⭐, €70-100)</li>
+                    <li><strong>IC Card Suica:</strong> Compra all'arrivo aeroporto (€25) - usabile ovunque (treni, metro, negozi, caffè)</li>
+                    <li><strong>WiFi:</strong> Non è necessario roaming; connettiti a WiFi hotel/ostelli oppure compra eSIM locale</li>
+                    <li><strong>Lingua:</strong> Staff alberghi parla inglese; scarica Google Translate offline per emergenze</li>
+                    <li><strong>Soldi:</strong> ATM in aeroporto dispensa contanti (bancomat italiano). Credit card accettate in città.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- CONTATTI UTILI -->
+        <section>
+            <h2>📱 Contatti & Link Utili</h2>
+
+            <table class="budget-table">
+                <tr>
+                    <th>Servizio</th>
+                    <th>Link / Info</th>
+                    <th>Note</th>
+                </tr>
+                <tr>
+                    <td>Prenotazioni Voli</td>
+                    <td>KAYAK.it | Google Voli | Skyscanner</td>
+                    <td>Confronta prezzi, prenota 6-8 settimane prima</td>
+                </tr>
+                <tr>
+                    <td>Alloggi</td>
+                    <td>Booking.com | Agoda</td>
+                    <td>Cancellazione gratuita di solito</td>
+                </tr>
+                <tr>
+                    <td>Treni Giappone</td>
+                    <td>Hyperdia app | JR East</td>
+                    <td>Consulta orari, prenota online</td>
+                </tr>
+                <tr>
+                    <td>Mappe Offline</td>
+                    <td>Google Maps (download sezioni)</td>
+                    <td>Funziona senza internet</td>
+                </tr>
+                <tr>
+                    <td>Pagamenti</td>
+                    <td>PayPay app | Suica IC Card</td>
+                    <td>Accettati ovunque, essenziali</td>
+                </tr>
+                <tr>
+                    <td>eSIM Dati</td>
+                    <td>Airalo.com</td>
+                    <td>€15-30 per 10 giorni, compra prima</td>
+                </tr>
+                <tr>
+                    <td>Tea Ceremony</td>
+                    <td>Camellia Tea Ceremony Kyoto</td>
+                    <td>€30-50, prenota 2 settimane prima</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- CONSIGLI FINALI -->
+        <section>
+            <h2>🌟 Consigli Finali Insider</h2>
+
+            <div class="info-box">
+                <h3>🎯 Prima di Partire</h3>
+                <ul style="margin-left: 2rem;">
+                    <li><strong>📚 Impara 10 parole giapponesi base:</strong> Arigatou (grazie), sumimasen (scusa), eigo (inglese), yoshi (buono)</li>
+                    <li><strong>🎒 Valigia light:</strong> Giappone ha laundry ovunque, puoi lavare vestiti daily</li>
+                    <li><strong>👟 Scarpe comode:</strong> Camminerai 15k+ passi giornalmente</li>
+                    <li><strong>🧴 Medicinali base:</strong> Antidolorifico, antidiarroico (non tutto si trova ovunque)</li>
+                    <li><strong>💳 Contatta banca:</strong> Avvisa che sarai in Giappone (attivazione carta estera)</li>
+                </ul>
+            </div>
+
+            <div class="success-box">
+                <h3>✨ Momenti "Wow" del Viaggio</h3>
+                <ul style="margin-left: 2rem;">
+                    <li>🐟 <strong>Tsukiji mattina:</strong> Primo sorso di sushi fresco alle 6 di mattina</li>
+                    <li>🗻 <strong>Grande Buddha Kamakura:</strong> Daibutsu 13 metri in bronzo + Hokoku-ji bamboo grove intima ⭐ NEW!</li>
+                    <li>🏮 <strong>Sanmachi Suji al tramonto:</strong> Case di legno 500 anni illuminate</li>
+                    <li>❄️ <strong>Shirakawa-go vista panoramica:</strong> Villaggio intero da osservatorio</li>
+                    <li>🍽️ <strong>Kaiseki dinner ryokan:</strong> 15 piatti d'arte, esperienza sensoriale</li>
+                    <li>🍵 <strong>Tea ceremony medita:</strong> Silenzio consapevole, consapevolezza vera</li>
+                    <li>🦌 <strong>Nara cervini che ti sfiorano:</strong> Connessione genuina con animali</li>
+                    <li>🍺 <strong>Izakaya locale sera:</strong> Ridere con salaryman giapponesi sconosciuti</li>
+                </ul>
+            </div>
+
+            <div class="warning-box">
+                <h3>💡 Pro Tips</h3>
+                <ul style="margin-left: 2rem;">
+                    <li><strong>🎵 Osoba notturno:</strong> Dov'è il primo treno mattina, puoi arrivare tardi e riposare in stazione (pulite, wifi!)</li>
+                    <li><strong>📸 Fotografie:</strong> Tramonto > alba = meno turisti, meglio illuminato</li>
+                    <li><strong>🌙 Visita anche di notte:</strong> Città illuminate sono magiche (Osaka, Tokyo night)</li>
+                    <li><strong>🗺️ Non usare GPS costantemente:</strong> Perdetevi intenzionalmente, scoprirete strade nascoste</li>
+                    <li><strong>🍜 Mangia dove mangiano i locali:</strong> Lunghe code = cibo buono, price good</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <h3>🇯🇵 Giappone Autentico - 10 Giorni (Con Kamakura DAY TRIP ⭐)</h3>
+            <p>Itinerario completo con Tokyo → Kamakura → Takayama → Kyoto → Osaka</p>
+            <p style="margin-top: 1rem; font-size: 0.9rem;">Created with ❤️ | Maggio 2027 | GitHub Pages Ready | Updated con Kamakura</p>
+            <p style="font-size: 0.8rem; margin-top: 1rem; opacity: 0.8;">Tutti i prezzi sono indicativi (maggio 2027) e soggetti a variazioni | Budget: €2.500-3.034/persona</p>
+        </div>
+    </footer>
+
+    <script>
+        // Mappa interattiva
+        let map = L.map('map').setView([36.0, 137.5], 6);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(map);
+
+        const locations = [
+            {
+                name: "Aeroporto Tokyo Haneda",
+                lat: 35.5493,
+                lng: 139.7798,
+                desc: "Arrivo Giorno 1",
+                icon: "✈️"
+            },
+            {
+                name: "Tsukiji Fish Market",
+                lat: 35.6648,
+                lng: 139.7703,
+                desc: "Colazione autentica - Giorno 2",
+                icon: "🐟"
+            },
+            {
+                name: "Kamakura - Grande Buddha",
+                lat: 35.3122,
+                lng: 139.5573,
+                desc: "Daibutsu 13m, templi, Hokoku-ji bamboo - Giorno 3 (DAY TRIP)",
+                icon: "🗻"
+            },
+            {
+                name: "Takayama - Sanmachi Suji",
+                lat: 36.1413,
+                lng: 137.2596,
+                desc: "Città Edo, case 500+ anni - Giorno 4-5",
+                icon: "🏮"
+            },
+            {
+                name: "Shirakawa-go",
+                lat: 36.2578,
+                lng: 136.9062,
+                desc: "Villaggio UNESCO, gassho-zukuri - Giorno 5-6",
+                icon: "🏘️"
+            },
+            {
+                name: "Kyoto - Togetsutei Ryokan",
+                lat: 35.0112,
+                lng: 135.6778,
+                desc: "Ryokan autentico, kaiseki dinner - Giorno 6-7",
+                icon: "🏯"
+            },
+            {
+                name: "Kyoto - Fushimi Inari",
+                lat: 34.9674,
+                lng: 135.7629,
+                desc: "1000 torii rossi - Giorno 7",
+                icon: "⛩️"
+            },
+            {
+                name: "Nara Deer Park",
+                lat: 34.6852,
+                lng: 135.8048,
+                desc: "Cervi selvaggi - Giorno 8",
+                icon: "🦌"
+            },
+            {
+                name: "Osaka - Dotonbori",
+                lat: 34.6691,
+                lng: 135.5038,
+                desc: "Street food, izakaya - Giorno 9-10",
+                icon: "🍜"
+            },
+            {
+                name: "Kansai Airport",
+                lat: 34.4347,
+                lng: 135.2281,
+                desc: "Ritorno - Giorno 10",
+                icon: "✈️"
+            }
+        ];
+
+        locations.forEach(loc => {
+            let marker = L.marker([loc.lat, loc.lng]).addTo(map);
+            marker.bindPopup(`<b>${loc.icon} ${loc.name}</b><br>${loc.desc}`);
+        });
+
+        // Tab functionality
+        function showTab(tabName) {
+            const tabContents = document.querySelectorAll('.tab-content');
+            const tabBtns = document.querySelectorAll('.tab-btn');
+
+            tabContents.forEach(tab => tab.classList.remove('active'));
+            tabBtns.forEach(btn => btn.classList.remove('active'));
+
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Smooth scrolling
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
